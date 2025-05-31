@@ -4,7 +4,8 @@ Nvim plugin that utilizes [JetBrains.ReSharper.GlobalTools](https://www.jetbrain
 
 ## Usage
 
-`JbInspect` user command executes `jb inspect` for current buffer and populates quickfix list with code issues
+- `JbInspect` user command executes `jb inspect` for current buffer, populates quickfix list with code issues and adds virtual text
+- `JbClearExtMarks` user command clears virtual text for issues
 
 ## Installation
 
