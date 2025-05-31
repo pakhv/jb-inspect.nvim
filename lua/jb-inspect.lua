@@ -1,14 +1,12 @@
 local utils = require('utils')
 local json = require('json')
+local extmarks = require('extmarks')
 
 local OUTPUT_REL_PATH = 'jbinspect/output.json'
-local INSPECTION_LEVEL = {
-  error = 0,
-  warning = 1,
-  note = 2
-}
 
 vim.api.nvim_create_user_command('JbInspect', function(_)
+  extmarks.clear()
+
   local filetype = vim.bo.filetype
 
   if (filetype ~= 'cs') then
@@ -48,12 +46,8 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
     local jb_help = inspect_json["runs"][1]["tool"]["driver"]["rules"]
     local qf_list = {}
     local rules_help = {}
-    table.sort(jb_results, function(a, b)
-      local a_level = INSPECTION_LEVEL[a["level"]]
-      local b_level = INSPECTION_LEVEL[b["level"]]
 
-      return a_level < b_level
-    end)
+    utils.sort_inspect_json(jb_results)
 
     for _, x in ipairs(jb_help) do
       local rule_id = x["id"]
@@ -73,6 +67,8 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
       qf_list[i]["end_lnum"] = x["locations"][1]["physicalLocation"]["region"]["endLine"]
       qf_list[i]["col"] = x["locations"][1]["physicalLocation"]["region"]["startColumn"]
       qf_list[i]["end_col"] = x["locations"][1]["physicalLocation"]["region"]["endColumn"]
+
+      extmarks.create(x["message"]["text"], qf_list[i]["lnum"] - 1, qf_list[i]["col"] - 1, x["level"])
     end
 
     if (next(qf_list) ~= nil) then
@@ -80,4 +76,8 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
       vim.cmd('copen')
     end
   end)
+end, {})
+
+vim.api.nvim_create_user_command('JbClearExtMarks', function(_)
+  extmarks.clear()
 end, {})
