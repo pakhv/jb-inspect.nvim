@@ -12,7 +12,7 @@ Nvim plugin that utilizes [JetBrains.ReSharper.GlobalTools](https://www.jetbrain
 
 ```
 {
-    dir = "pakhv/jb-inspect.nvim",
+    "pakhv/jb-inspect.nvim",
     config = function()
         require 'jb-inspect'
     end
