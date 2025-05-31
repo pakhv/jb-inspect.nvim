@@ -49,9 +49,11 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
 
     utils.sort_inspect_json(jb_results)
 
-    for _, x in ipairs(jb_help) do
-      local rule_id = x["id"]
-      rules_help[rule_id] = x["helpUri"]
+    if jb_help then
+      for _, x in ipairs(jb_help) do
+        local rule_id = x["id"]
+        rules_help[rule_id] = x["helpUri"]
+      end
     end
 
     local bufnr = vim.fn.bufnr()
@@ -74,6 +76,8 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
     if (next(qf_list) ~= nil) then
       vim.fn.setqflist(qf_list)
       vim.cmd('copen')
+    else
+      print 'No code issues found!'
     end
   end)
 end, {})
