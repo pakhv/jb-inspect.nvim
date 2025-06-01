@@ -29,4 +29,17 @@ function M.sort_inspect_json(tbl)
   end)
 end
 
+---Finds an element in an array
+---@param tbl table Table
+---@param predicate fun(el: any): boolean Predicate
+function M.array_find(tbl, predicate)
+  for _, x in ipairs(tbl) do
+    if predicate(x) then
+      return x
+    end
+  end
+
+  return nil
+end
+
 return M
