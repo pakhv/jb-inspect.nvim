@@ -1,5 +1,8 @@
 local M = {}
 
+---Runs a shell command asynchronously
+---@param cmd string Shell command
+---@return integer # Job Id
 function M.run_async(cmd, on_exit)
   local job_id = vim.fn.jobstart(cmd, {
     stdout_buffered = true,
@@ -15,12 +18,8 @@ function M.run_async(cmd, on_exit)
   return job_id
 end
 
-M.INSPECTION_LEVEL = {
-  error = 0,
-  warning = 1,
-  note = 2
-}
-
+---Sorts jb inspectcode results by line in place
+---@param tbl table jb inspectcode results
 function M.sort_inspect_json(tbl)
   table.sort(tbl, function(a, b)
     local a_level = a["locations"][1]["physicalLocation"]["region"]["startLine"]

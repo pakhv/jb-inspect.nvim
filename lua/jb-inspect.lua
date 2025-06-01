@@ -7,15 +7,16 @@ local OUTPUT_REL_PATH = 'jbinspect/output.json'
 vim.api.nvim_create_user_command('JbInspect', function(_)
   extmarks.clear()
 
+  local bufnr = vim.fn.bufnr()
   local filetype = vim.bo.filetype
 
-  if (filetype ~= 'cs') then
+  if filetype ~= 'cs' then
     print 'Invalid filetype'
     return
   end
 
   local cs_projs = vim.fn.system('find "$(pwd)" -type f -name "*.csproj"')
-  local current_buf_path = vim.api.nvim_buf_get_name(0)
+  local current_buf_path = vim.api.nvim_buf_get_name(bufnr)
   local current_project_path = nil
   local buf_rel_path = nil
 
@@ -23,13 +24,13 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
     local path = vim.fs.dirname(s)
     buf_rel_path = vim.fs.relpath(path, current_buf_path)
 
-    if (buf_rel_path ~= nil) then
+    if buf_rel_path ~= nil then
       current_project_path = s
       break
     end
   end
 
-  if (current_project_path == nil) then
+  if current_project_path == nil then
     print 'Couldn\'t find csproj file'
     return
   end
@@ -56,12 +57,10 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
       end
     end
 
-    local bufnr = vim.fn.bufnr()
-
     for i, x in ipairs(jb_results) do
       qf_list[i] = {}
       qf_list[i]["text"] = x["message"]["text"]
-      if (rules_help[x["ruleId"]]) then
+      if rules_help[x["ruleId"]] then
         qf_list[i]["text"] = qf_list[i]["text"] .. ' (' .. rules_help[x["ruleId"]] .. ')'
       end
       qf_list[i]["bufnr"] = bufnr
@@ -70,12 +69,14 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
       qf_list[i]["col"] = x["locations"][1]["physicalLocation"]["region"]["startColumn"]
       qf_list[i]["end_col"] = x["locations"][1]["physicalLocation"]["region"]["endColumn"]
 
-      extmarks.create(x["message"]["text"], qf_list[i]["lnum"] - 1, qf_list[i]["col"] - 1, x["level"])
+      extmarks.create(bufnr, x["message"]["text"], qf_list[i]["lnum"] - 1, qf_list[i]["col"] - 1, x["level"])
     end
 
-    if (next(qf_list) ~= nil) then
+    if next(qf_list) ~= nil then
       vim.fn.setqflist(qf_list)
       vim.cmd('copen')
+
+      print 'JbInspect done!'
     else
       print 'No code issues found!'
     end
