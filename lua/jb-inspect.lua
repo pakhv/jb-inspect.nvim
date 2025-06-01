@@ -2,6 +2,11 @@ local utils = require('utils')
 local json = require('json')
 local extmarks = require('extmarks')
 
+---@class (exact) JbPaths
+---@field buf_path string
+---@field project_path string
+---@field buf_rel_path string
+
 local OUTPUT_REL_PATH = 'jbinspect/output.json'
 
 ---Show code issues in a buffer
@@ -63,17 +68,10 @@ local function show_buf_code_issues(bufnr, buf_rel_path, json_path)
   end
 end
 
-vim.api.nvim_create_user_command('JbInspect', function(_)
-  extmarks.clear()
-
-  local bufnr = vim.fn.bufnr()
-  local filetype = vim.bo.filetype
-
-  if filetype ~= 'cs' then
-    print 'Invalid filetype'
-    return
-  end
-
+---Gets paths for code inspection
+---@param bufnr integer
+---@return JbPaths
+local function get_paths(bufnr)
   local cs_projs = vim.fn.system('find "$(pwd)" -type f -name "*.csproj"')
   local current_buf_path = vim.api.nvim_buf_get_name(bufnr)
   local current_project_path = nil
@@ -89,22 +87,59 @@ vim.api.nvim_create_user_command('JbInspect', function(_)
     end
   end
 
-  if buf_rel_path == nil or current_project_path == nil then
+  return {
+    buf_path = current_buf_path,
+    project_path = current_project_path,
+    buf_rel_path = buf_rel_path
+  }
+end
+
+vim.api.nvim_create_user_command('JbInspect', function(_)
+  extmarks.clear()
+
+  local bufnr = vim.fn.bufnr()
+  local filetype = vim.bo.filetype
+
+  if filetype ~= 'cs' then
+    print 'Invalid filetype'
+    return
+  end
+
+  local paths = get_paths(bufnr)
+
+  if paths.buf_rel_path == nil or paths.project_path == nil then
     print 'Couldn\'t find csproj file'
     return
   end
 
   local command = 'jb inspectcode ' ..
-      current_project_path .. ' -o="' .. OUTPUT_REL_PATH .. '" --include="' .. buf_rel_path .. '"'
+      paths.project_path .. ' -o="' .. OUTPUT_REL_PATH .. '" --include="' .. paths.buf_rel_path .. '"'
 
   local output_full_path = vim.fn.getcwd() .. '/' .. OUTPUT_REL_PATH
   print('Executing: ' .. command)
 
   utils.run_async(command, function()
-    show_buf_code_issues(bufnr, buf_rel_path, output_full_path)
+    show_buf_code_issues(bufnr, paths.buf_rel_path, output_full_path)
   end)
 end, {})
 
 vim.api.nvim_create_user_command('JbClearExtMarks', function(_)
   extmarks.clear()
+end, {})
+
+vim.api.nvim_create_user_command('JbShowCachedIssues', function(_)
+  extmarks.clear()
+
+  local bufnr = vim.fn.bufnr()
+  local filetype = vim.bo.filetype
+
+  if filetype ~= 'cs' then
+    print 'Invalid filetype'
+    return
+  end
+
+  local paths = get_paths(bufnr)
+  local output_full_path = vim.fn.getcwd() .. '/' .. OUTPUT_REL_PATH
+
+  show_buf_code_issues(bufnr, paths.buf_rel_path, output_full_path)
 end, {})
