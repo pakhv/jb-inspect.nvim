@@ -33,7 +33,7 @@ end
 ---@param tbl table Table
 ---@param predicate fun(el: any): boolean Predicate
 function M.array_find(tbl, predicate)
-  for _, x in ipairs(tbl) do
+  for _, x in ipairs(tbl or {}) do
     if predicate(x) then
       return x
     end
